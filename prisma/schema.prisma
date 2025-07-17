@@ -1,0 +1,275 @@
+// Prisma schema for gamification-service
+// Datasource & generator
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model pets {
+  pet_evolution_costs pet_evolution_costs[]
+  id                 String   @id @default(uuid()) @db.Uuid
+  name               String   @db.VarChar(100)
+  scientific_name    String?  @db.VarChar(200)
+  description        String?
+  species_type       String?  @db.VarChar(50)
+  habitat            String?  @db.VarChar(100)
+  rarity             String   @default("common") @db.VarChar(20)
+  is_mexican_native  Boolean  @default(true)
+  unlock_requirements Json    @default("{}")
+  evolution_chain    Json    @default("[]")
+  base_stats         Json    @default("{}")
+  avatar_url         String?  @db.VarChar(500)
+  model_3d_url       String?  @db.VarChar(500)
+  quiz_points_cost   Int      @default(100)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @default(now())
+  deleted_at         DateTime?
+  created_by         String?  @db.Uuid
+  updated_by         String?  @db.Uuid
+
+  user_pets                  user_pets[]
+  pet_store_transactions     pet_store_transactions[]
+}
+
+model pet_evolution_costs {
+  id           String   @id @default(uuid()) @db.Uuid
+  pet_id       String   @db.Uuid
+  stage        Int      // 1 = bebe, 2 = joven, 3 = adulto
+  cost         Int      // Costo en puntos de mascota
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now())
+
+  pet          pets     @relation(fields: [pet_id], references: [id])
+
+  @@unique([pet_id, stage])
+}
+
+model user_pets {
+  selected_stage    Int?     // Etapa seleccionada por el usuario para visualización
+  id                 String   @id @default(uuid()) @db.Uuid
+  user_id            String   @db.Uuid
+  pet_id             String   @db.Uuid
+  nickname           String   @db.VarChar(100)
+  level              Int      @default(1)
+  experience_points  Int      @default(0)
+  happiness_level    Int      @default(100)
+  health_level       Int      @default(100)
+  evolution_stage    Int      @default(1)
+  is_active          Boolean  @default(true)
+  custom_attributes  Json     @default("{}")
+  acquired_method    String   @default("purchased") @db.VarChar(20)
+  quiz_points_spent  Int?
+  adopted_at         DateTime @default(now())
+  last_interaction_at DateTime @default(now())
+  created_at         DateTime @default(now())
+  updated_at         DateTime @default(now())
+  deleted_at         DateTime?
+  is_featured        Boolean  @default(false)
+
+  pet                pets     @relation(fields: [pet_id], references: [id])
+}
+
+model badges {
+  id                       String   @id @default(uuid()) @db.Uuid
+  name                     String   @db.VarChar(100)
+  description              String?
+  icon_url                 String?  @db.VarChar(500)
+  category                 String?  @db.VarChar(50)
+  rarity                   String   @default("common") @db.VarChar(20)
+  unlock_criteria          Json     // not null
+  challenge_points_required Int     @default(0)
+  points_reward            Int      @default(0)
+  is_secret                Boolean  @default(false)
+  unlock_order             Int?
+  badge_tier               String   @default("bronze") @db.VarChar(20)
+  created_at               DateTime @default(now())
+  updated_at               DateTime @default(now())
+  deleted_at               DateTime?
+  created_by               String?  @db.Uuid
+  updated_by               String?  @db.Uuid
+
+  user_badges              user_badges[]
+}
+
+model user_badges {
+  id                       String   @id @default(uuid()) @db.Uuid
+  user_id                  String   @db.Uuid
+  badge_id                 String   @db.Uuid
+  unlocked_at              DateTime @default(now())
+  is_featured              Boolean  @default(false)
+  unlock_context           Json     @default("{}")
+  challenge_points_when_unlocked Int?
+  created_at               DateTime @default(now())
+
+  badge                    badges   @relation(fields: [badge_id], references: [id])
+
+  @@unique([user_id, badge_id])
+}
+
+model user_quiz_points {
+  id                    String   @id @default(uuid()) @db.Uuid
+  user_id               String   @unique @db.Uuid
+  total_quiz_points     Int      @default(0)
+  available_quiz_points Int      @default(0)
+  spent_quiz_points     Int      @default(0)
+  quizzes_completed     Int      @default(0)
+  quizzes_passed        Int      @default(0)
+  current_quiz_streak   Int      @default(0)
+  longest_quiz_streak   Int      @default(0)
+  quiz_level            Int      @default(1)
+  quiz_level_progress   Decimal  @default(0.00) @db.Decimal(5,2)
+  last_quiz_point_earned_at DateTime?
+  created_at            DateTime @default(now())
+  updated_at            DateTime @default(now())
+}
+
+model quiz_points_history {
+  id                    String   @id @default(uuid()) @db.Uuid
+  user_id               String   @db.Uuid
+  points_change         Int
+  transaction_type      String   @db.VarChar(30)
+  quiz_id               String?  @db.Uuid
+  pet_id                String?  @db.Uuid
+  quiz_score_percentage Decimal? @db.Decimal(5,2)
+  description           String?
+  multiplier            Decimal  @default(1.00) @db.Decimal(3,2)
+  bonus_reason          String?  @db.VarChar(100)
+  created_at            DateTime @default(now())
+
+  @@index([user_id], name: "idx_quiz_points_history_user")
+  @@index([transaction_type], name: "idx_quiz_points_history_type")
+  @@index([created_at], name: "idx_quiz_points_history_date")
+}
+
+model quiz_points_rankings {
+  id                    String   @id @default(uuid()) @db.Uuid
+  user_id               String   @unique @db.Uuid
+  global_quiz_rank      Int?
+  weekly_quiz_rank      Int?
+  monthly_quiz_rank     Int?
+  age_group_quiz_rank   Int?
+  total_quiz_score      Int      @default(0)
+  weekly_quiz_score     Int      @default(0)
+  monthly_quiz_score    Int      @default(0)
+  quiz_accuracy_percentage Decimal @default(0.00) @db.Decimal(5,2)
+  total_quizzes_completed Int   @default(0)
+  last_rank_update      DateTime @default(now())
+  created_at            DateTime @default(now())
+  updated_at            DateTime @default(now())
+
+  @@index([global_quiz_rank], name: "idx_quiz_rankings_global")
+  @@index([weekly_quiz_rank], name: "idx_quiz_rankings_weekly")
+  @@index([total_quiz_score], name: "idx_quiz_rankings_score")
+}
+
+model user_challenge_points {
+  id                        String   @id @default(uuid()) @db.Uuid
+  user_id                   String   @unique @db.Uuid
+  total_challenge_points    Int      @default(0)
+  lifetime_challenge_points Int      @default(0)
+  challenges_completed      Int      @default(0)
+  challenges_submitted      Int      @default(0)
+  current_challenge_streak  Int      @default(0)
+  longest_challenge_streak  Int      @default(0)
+  current_badge_tier        String   @default("bronze") @db.VarChar(20)
+  next_badge_tier           String?  @db.VarChar(20)
+  points_to_next_tier       Int      @default(0)
+  environmental_impact_score Int     @default(0)
+  last_challenge_point_earned_at DateTime?
+  created_at                DateTime @default(now())
+  updated_at                DateTime @default(now())
+}
+
+model challenge_points_history {
+  id                    String   @id @default(uuid()) @db.Uuid
+  user_id               String   @db.Uuid
+  points_change         Int
+  transaction_type      String   @db.VarChar(30)
+  challenge_id          String?  @db.Uuid
+  submission_id         String?  @db.Uuid
+  validation_score      Int?
+  description           String?
+  multiplier            Decimal  @default(1.00) @db.Decimal(3,2)
+  bonus_reason          String?  @db.VarChar(100)
+  environmental_category String? @db.VarChar(50)
+  created_at            DateTime @default(now())
+
+  @@index([user_id], name: "idx_challenge_points_history_user")
+  @@index([transaction_type], name: "idx_challenge_points_history_type")
+  @@index([environmental_category], name: "idx_challenge_points_history_category")
+  @@index([created_at], name: "idx_challenge_points_history_date")
+}
+
+model challenge_points_rankings {
+  id                        String   @id @default(uuid()) @db.Uuid
+  user_id                   String   @unique @db.Uuid
+  global_challenge_rank     Int?
+  weekly_challenge_rank     Int?
+  monthly_challenge_rank    Int?
+  age_group_challenge_rank  Int?
+  environmental_impact_rank Int?
+  total_challenge_score     Int      @default(0)
+  weekly_challenge_score    Int      @default(0)
+  monthly_challenge_score   Int      @default(0)
+  environmental_impact_score Int     @default(0)
+  challenge_completion_rate Decimal  @default(0.00) @db.Decimal(5,2)
+  total_challenges_completed Int     @default(0)
+  avg_validation_score      Decimal  @default(0.00) @db.Decimal(3,2)
+  last_rank_update          DateTime @default(now())
+  created_at                DateTime @default(now())
+  updated_at                DateTime @default(now())
+
+  @@index([global_challenge_rank], name: "idx_challenge_rankings_global")
+  @@index([weekly_challenge_rank], name: "idx_challenge_rankings_weekly")
+  @@index([environmental_impact_rank], name: "idx_challenge_rankings_impact")
+  @@index([total_challenge_score], name: "idx_challenge_rankings_score")
+}
+
+model badge_tiers_config {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tier_name          String   @unique @db.VarChar(20)
+  tier_order         Int      @unique
+  challenge_points_required Int
+  tier_color_hex     String   @db.VarChar(7)
+  tier_icon_url      String?  @db.VarChar(500)
+  tier_description   String?
+  rewards_unlocked   Json     @default("[]")
+  created_at         DateTime @default(now())
+  updated_at         DateTime @default(now())
+}
+
+model quiz_levels_config {
+  id                 String   @id @default(uuid()) @db.Uuid
+  level_number       Int      @unique
+  quizzes_required   Int
+  quiz_points_bonus  Int      @default(0)
+  level_title        String?  @db.VarChar(100)
+  level_description  String?
+  perks_unlocked     Json     @default("[]")
+  created_at         DateTime @default(now())
+  updated_at         DateTime @default(now())
+}
+
+model pet_store_transactions {
+  id                 String   @id @default(uuid()) @db.Uuid
+  user_id            String   @db.Uuid
+  pet_id             String   @db.Uuid
+  quiz_points_spent  Int
+  transaction_status String   @default("completed") @db.VarChar(20)
+  was_on_sale        Boolean  @default(false)
+  original_price     Int?
+  discount_percentage Int?
+  purchased_at       DateTime @default(now())
+  created_at         DateTime @default(now())
+
+  pet                pets     @relation(fields: [pet_id], references: [id])
+
+  @@index([user_id], name: "idx_pet_store_transactions_user")
+  @@index([pet_id], name: "idx_pet_store_transactions_pet")
+  @@index([purchased_at], name: "idx_pet_store_transactions_date")
+}
