@@ -1,6 +1,7 @@
 import { PetRepository } from "../../../domain/repositories/PetRepository";
 import { Pet } from "../../../domain/entities/Pet";
 import prisma from "../prismaClient";
+import crypto from "crypto";
 
 export class PetPrismaRepository implements PetRepository {
   async createPet(data: any): Promise<Pet> {
