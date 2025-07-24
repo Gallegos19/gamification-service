@@ -19,16 +19,21 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.11.1",
+    "@types/cron": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-transformer-validator": "^0.9.1",
     "class-validator": "^0.14.2",
     "cors": "^2.8.5",
+    "cron": "^4.3.2",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "prisma": "^6.11.1",
     "reflect-metadata": "^0.2.2",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "tsyringe": "^4.10.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

@@ -98,6 +98,11 @@ import { ReleasePet } from '../../application/pets/ReleasePet';
 import { EvolvePet } from '../../application/pets/EvolvePet';
 import { SelectPetStage } from '../../application/pets/SelectPetStage';
 import { PetEvolutionCostPrismaRepository } from '../db/repositories/PetEvolutionCostPrismaRepository';
+import { UserPetsPrismaRepository } from '../../infrastructure/db/repositories/UserPetsPrismaRepository';
+import { UpdatePetStatsUseCase } from '../../application/pets/UpdatePetStats';
+import { PetMaintenanceService } from '../../application/services/PetMaintenanceService';
+import { setupPetMaintenanceCron } from '../cron/petMaintenance.cron';
+import { PrismaService } from '../db/prisma.service';
 import { CreatePetEvolutionCost } from '../../application/pets/CreatePetEvolutionCost';
 import { ListPetEvolutionCosts } from '../../application/pets/ListPetEvolutionCosts';
 import { UpdatePetEvolutionCost } from '../../application/pets/UpdatePetEvolutionCost';
@@ -127,7 +132,28 @@ const rankingsRepo = new RankingsPrismaRepository();
 const getCombinedRankingsUseCase = new GetCombinedRankings(rankingsRepo);
 const getUserStatsUseCase = new GetUserStats(rankingsRepo);
 
+// Initialize Prisma service
+const prismaService = new PrismaService();
+
+// Initialize repositories
+const userPetsRepo = new UserPetsPrismaRepository(prismaService);
+
+// Initialize use cases and services
+const updatePetStatsUseCase = new UpdatePetStatsUseCase(userPetsRepo);
+const petMaintenanceService = new PetMaintenanceService(userPetsRepo);
+
+// Start the pet maintenance cron job
+const petMaintenanceCron = setupPetMaintenanceCron();
+
 export const container = {
+  // Repositories
+  userPetsRepository: userPetsRepo,
+  
+  // Services
+  petMaintenanceService,
+  
+  // Use Cases
+  updatePetStatsUseCase,
   createPetUseCase: new CreatePet(petRepo),
   getPetByIdUseCase: new GetPetById(petRepo),
   updatePetUseCase: new UpdatePet(petRepo),

@@ -24,6 +24,10 @@ const swaggerDocument: OpenAPIV3.Document = {
       name: "PetEvolutionCosts",
       description: "Costos de evolución de mascotas",
     },
+    {
+      name: "Pet Stats",
+      description: "Gestión de estadísticas de mascotas (felicidad y salud)",
+    },
   ],
   components: {
     securitySchemes: {
@@ -263,6 +267,232 @@ const swaggerDocument: OpenAPIV3.Document = {
   },
   security: [{ bearerAuth: [] }],
   paths: {
+    "/api/gamification/pet-stats/{petId}/increase": {
+      post: {
+        tags: ["Pet Stats"],
+        summary: "Aumentar felicidad y/o salud de una mascota",
+        description: "Incrementa los valores de felicidad y/o salud de una mascota. Los valores no superarán el máximo de 100.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "petId",
+            in: "path",
+            required: true,
+            schema: { 
+              type: "string",
+              example: "pet-123" 
+            },
+            description: "ID de la mascota a actualizar"
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  happiness: { 
+                    type: "integer", 
+                    minimum: 0,
+                    maximum: 100,
+                    example: 10,
+                    description: "Cantidad a incrementar en felicidad (opcional)" 
+                  },
+                  health: { 
+                    type: "integer", 
+                    minimum: 0,
+                    maximum: 100,
+                    example: 15,
+                    description: "Cantidad a incrementar en salud (opcional)" 
+                  }
+                },
+                anyOf: [
+                  { required: ["happiness"] },
+                  { required: ["health"] }
+                ],
+                example: {
+                  happiness: 10,
+                  health: 15
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Estadísticas de la mascota actualizadas exitosamente",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Pet"
+                },
+                example: {
+                  id: "pet-123",
+                  name: "Dragoncito",
+                  happiness_level: 85,
+                  health_level: 90,
+                  last_interaction_at: "2023-07-23T19:00:00.000Z"
+                }
+              }
+            }
+          },
+          400: { 
+            description: "Solicitud inválida - Datos de entrada no válidos",
+            content: {
+              "application/json": {
+                example: {
+                  error: "Al menos uno de los campos (happiness o health) debe ser proporcionado"
+                }
+              }
+            }
+          },
+          401: { 
+            description: "No autorizado - Token inválido o faltante",
+            content: {
+              "application/json": {
+                example: {
+                  error: "Token de autenticación inválido"
+                }
+              }
+            }
+          },
+          404: { 
+            description: "Mascota no encontrada",
+            content: {
+              "application/json": {
+                example: {
+                  error: "No se encontró la mascota especificada"
+                }
+              }
+            }
+          },
+          500: { 
+            description: "Error interno del servidor",
+            content: {
+              "application/json": {
+                example: {
+                  error: "Ocurrió un error al actualizar las estadísticas de la mascota"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gamification/pet-stats/{petId}/decrease": {
+      post: {
+        tags: ["Pet Stats"],
+        summary: "Disminuir felicidad y/o salud de una mascota",
+        description: "Reduce los valores de felicidad y/o salud de una mascota. Los valores no bajarán del mínimo de 10.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "petId",
+            in: "path",
+            required: true,
+            schema: { 
+              type: "string",
+              example: "pet-123" 
+            },
+            description: "ID de la mascota a actualizar"
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  happiness: { 
+                    type: "integer", 
+                    minimum: 0,
+                    maximum: 100,
+                    example: 5,
+                    description: "Cantidad a disminuir en felicidad (opcional)" 
+                  },
+                  health: { 
+                    type: "integer", 
+                    minimum: 0,
+                    maximum: 100,
+                    example: 8,
+                    description: "Cantidad a disminuir en salud (opcional)" 
+                  }
+                },
+                anyOf: [
+                  { required: ["happiness"] },
+                  { required: ["health"] }
+                ],
+                example: {
+                  happiness: 5,
+                  health: 8
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Estadísticas de la mascota actualizadas exitosamente",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Pet"
+                },
+                example: {
+                  id: "pet-123",
+                  name: "Dragoncito",
+                  happiness_level: 75,
+                  health_level: 82,
+                  last_interaction_at: "2023-07-23T19:00:00.000Z"
+                }
+              }
+            }
+          },
+          400: { 
+            description: "Solicitud inválida - Datos de entrada no válidos",
+            content: {
+              "application/json": {
+                example: {
+                  error: "Al menos uno de los campos (happiness o health) debe ser proporcionado"
+                }
+              }
+            }
+          },
+          401: { 
+            description: "No autorizado - Token inválido o faltante",
+            content: {
+              "application/json": {
+                example: {
+                  error: "Token de autenticación inválido"
+                }
+              }
+            }
+          },
+          404: { 
+            description: "Mascota no encontrada",
+            content: {
+              "application/json": {
+                example: {
+                  error: "No se encontró la mascota especificada"
+                }
+              }
+            }
+          },
+          500: { 
+            description: "Error interno del servidor",
+            content: {
+              "application/json": {
+                example: {
+                  error: "Ocurrió un error al actualizar las estadísticas de la mascota"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/gamification/quiz-points/{userId}/award": {
       post: {
         tags: ["Quiz Points"],
@@ -637,7 +867,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/{userId}/adopt": {
       post: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Adoptar una mascota",
         parameters: [
           {
@@ -889,7 +1119,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/{userId}": {
       get: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Obtener mascotas de un usuario",
         parameters: [
           {
@@ -1020,7 +1250,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/{userId}/feature": {
       post: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary:
           "Destacar una mascota para un usuario (solo una puede estar destacada a la vez)",
         parameters: [
@@ -1075,7 +1305,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/{userId}/evolve": {
       post: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary:
           "Evolucionar una mascota del usuario (descuenta puntos y sube etapa)",
         parameters: [
@@ -1169,7 +1399,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/owned/{userId}/{petId}/evolve": {
       post: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary:
           "Evolucionar una mascota del usuario (descuenta puntos y sube etapa)",
         parameters: [
@@ -1256,7 +1486,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/owned/{userId}/{petId}/selected-stage": {
       patch: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Seleccionar la etapa visualizada de una mascota adoptada",
         description:
           "Permite al usuario seleccionar la etapa (stage) visualizada de una mascota que ya ha adoptado y evolucionado. Solo se puede seleccionar una etapa que ya haya sido desbloqueada.",
@@ -1599,7 +1829,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     // Pets - Additional endpoints
     "/api/gamification/pets/available": {
       get: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Obtener mascotas disponibles para adoptar",
         responses: {
           200: {
@@ -1636,7 +1866,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/store": {
       get: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Obtener tienda de mascotas con precios y ofertas",
         parameters: [
           {
@@ -1694,7 +1924,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/{petId}/details": {
       get: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Obtener detalles específicos de una mascota",
         parameters: [
           {
@@ -1750,7 +1980,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/purchase": {
       post: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Comprar mascota (endpoint alternativo a adopt)",
         requestBody: {
           required: true,
@@ -2274,7 +2504,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets": {
       post: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Crear una nueva especie de mascota",
         requestBody: {
           required: true,
@@ -2330,7 +2560,7 @@ const swaggerDocument: OpenAPIV3.Document = {
     },
     "/api/gamification/pets/id/{petId}": {
       get: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Obtener una mascota por su ID",
         parameters: [
           {
@@ -2355,7 +2585,7 @@ const swaggerDocument: OpenAPIV3.Document = {
         },
       },
       put: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Actualizar una mascota existente",
         parameters: [
           {
@@ -2410,7 +2640,7 @@ const swaggerDocument: OpenAPIV3.Document = {
         },
       },
       delete: {
-        tags: ["Pets"],
+        tags: ["Pet Stats"],
         summary: "Eliminar una mascota",
         parameters: [
           {

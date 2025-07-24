@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
+import swaggerDocument from "./infrastructure/config/swagger";
 
 // Cargar variables de entorno
 dotenv.config();
@@ -17,9 +18,17 @@ app.use(express.json());
 // Importar middleware de autenticación
 import { authTokenMiddleware } from "./infrastructure/web/middlewares/authToken.middleware";
 
-// Swagger docs
-import swaggerDocument from "./infrastructure/config/swagger";
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Configurar Swagger UI
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    explorer: true,
+    customCss: ".swagger-ui .topbar { display: none } .swagger-ui .info { margin: 20px 0 } .swagger-ui .opblock-tag { font-size: 16px; padding: 5px 10px; }",
+    customSiteTitle: "Gamification Service API",
+    customfavIcon: "https://your-logo-url/favicon.ico",
+  })
+);
 
 // Ruta base de salud
 app.get("/api/gamification/health", (_req, res) => {
@@ -37,6 +46,8 @@ import petEvolutionCostRouter from "./infrastructure/web/routes/petEvolutionCost
 import quizRankingsRouter from "./infrastructure/web/routes/quizRankings.routes";
 import directRankingsRouter from "./infrastructure/web/routes/directRankings.routes";
 import { getQuizRankingsDirectly } from "./infrastructure/web/controllers/quizRankings.direct.controller";
+import petStatsRouter from "./infrastructure/web/routes/petStats.routes";
+import { setupPetMaintenanceCron } from "./infrastructure/cron/petMaintenance.cron";
 
 // Aplicar middleware de autenticación a todas las rutas protegidas
 const protectedRoutes = [
@@ -48,6 +59,7 @@ const protectedRoutes = [
   "/api/gamification/rankings",
   "/api/gamification/pet-evolution-costs",
   "/api/gamification/quiz-rankings",
+  "/api/gamification/pet-stats",
   "/api/gamification/direct-rankings"
 ];
 
@@ -64,7 +76,13 @@ app.use("/api/gamification/rankings", rankingsRouter);
 app.use("/api/gamification/pet-evolution-costs", petEvolutionCostRouter);
 app.use("/api/gamification/quiz-rankings", quizRankingsRouter);
 app.use("/api/gamification/direct-rankings", directRankingsRouter);
+app.use("/api/gamification/pet-stats", petStatsRouter);
 
+// Inicializar el cron job de mantenimiento de mascotas
+setupPetMaintenanceCron();
+console.log('Pet maintenance cron job initialized');
+
+// Inicializar la aplicación
 app.listen(PORT, () => {
   console.log(`Gamification Service running on port ${PORT}`);
 });
