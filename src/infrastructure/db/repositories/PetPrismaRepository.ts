@@ -534,6 +534,7 @@ export class PetPrismaRepository implements PetRepository {
         user_available_points: userPoints?.available_quiz_points || 0,
         user_pet_info: userPet
           ? {
+              idUserPet: userPet.id,
               nickname: userPet.nickname,
               level: userPet.level,
               evolution_stage: userPet.evolution_stage,
